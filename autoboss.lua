@@ -41,11 +41,6 @@ local function hasForceField()
 end
 
 local function sendToVoid()
-    local boss = getBoss()
-    if not boss or not boss:FindFirstChild("HumanoidRootPart") then
-        return
-    end
-
     while not hasForceField() do
         local character = getCharacter()
         local hrp = getHRP()
