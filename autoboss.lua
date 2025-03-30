@@ -42,6 +42,12 @@ end
 
 local function sendToVoid()
     while not hasForceField() do
+        local boss = getBoss()
+        if not boss or not boss:FindFirstChild("HumanoidRootPart") then
+            task.wait(1) -- Keep checking for the boss instead of returning
+            continue
+        end
+
         local character = getCharacter()
         local hrp = getHRP()
         local humanoid = character:FindFirstChildOfClass("Humanoid")
@@ -63,6 +69,7 @@ local function sendToVoid()
         task.wait(0.5)
     end
 end
+
 
 local function autoEquipWeapon()
     local args = {
@@ -151,14 +158,6 @@ local function killNPC(npc)
     end
 end
 
-local function pressSpaceOnLoad()
-    repeat task.wait() until game:IsLoaded() -- Wait for game to load
-    task.wait(10) -- Wait for 10 seconds
-    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game) -- Press Space
-    task.wait(0.1)
-    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game) -- Release Space
-end
-
 RunService.Heartbeat:Connect(function()
     for _, npc in pairs(Workspace.Entities:GetChildren()) do
         if npc:IsA("Model") then
@@ -168,7 +167,6 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- **Ensure Character and Boss are Loaded Before Running**
-task.spawn(pressSpaceOnLoad) -- Run space pressing function
 repeat task.wait() until isCharacterLoaded()
 repeat task.wait() until getBoss() -- Wait for boss to exist
 
