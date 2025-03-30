@@ -4,10 +4,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local GuiService = game:GetService("GuiService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-local RunService = game:GetService("RunService") -- Added for Heartbeat
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
-local healthThreshold = 0.37 -- NPC kill threshold
+local healthThreshold = 0.37
 
 local function getCharacter()
     return player.Character or player.CharacterAdded:Wait()
@@ -33,6 +33,11 @@ local function hasForceField()
 end
 
 local function sendToVoid()
+    local boss = getBoss()
+    if not boss or not boss:FindFirstChild("HumanoidRootPart") then
+        return
+    end
+
     while not hasForceField() do
         local character = getCharacter()
         local hrp = getHRP()
@@ -119,7 +124,7 @@ local function tweenToBoss()
 end
 
 local function autoReplay()
-    task.wait(6) -- Wait for the UI to load
+    task.wait(6)
 
     local replayButton = player:WaitForChild("PlayerGui")
         :WaitForChild("Vote")
@@ -128,20 +133,11 @@ local function autoReplay()
         :WaitForChild("Replay")
 
     if replayButton then
-        -- Move selection to Replay button
         GuiService.SelectedObject = replayButton
-        print("Replay button selected!")
-
-        task.wait(0.5) -- Small delay for UI update
-
-        -- Simulate pressing Enter to activate Replay
+        task.wait(0.5)
         VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
         task.wait(0.1)
         VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
-
-        print("Replay button activated!")
-    else
-        print("Replay button not found!")
     end
 end
 
@@ -149,11 +145,9 @@ local function killNPC(npc)
     local humanoid = npc:FindFirstChildOfClass("Humanoid")
     if humanoid and humanoid.Health / humanoid.MaxHealth <= healthThreshold then
         humanoid.Health = 0
-        print("NPC killed instantly.")
     end
 end
 
--- **Using Heartbeat for NPC Killing**
 RunService.Heartbeat:Connect(function()
     for _, npc in pairs(Workspace.Entities:GetChildren()) do
         if npc:IsA("Model") then
@@ -162,7 +156,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
-task.spawn(tweenToBoss)   -- Start auto navigation to boss
+task.spawn(tweenToBoss)
 
 while true do
     sendToVoid()
@@ -172,8 +166,7 @@ while true do
 
     local boss = getBoss()
     if not boss or not boss:FindFirstChild("Humanoid") or boss.Humanoid.Health <= 0 then
-        print("Boss is dead, restarting using auto-replay.")
-        autoReplay() -- Auto replay when the boss dies
-        task.wait(2) -- Wait to ensure replay triggers
+        autoReplay()
+        task.wait(5)
     end
 end
