@@ -10,8 +10,18 @@ local player = Players.LocalPlayer
 local healthThreshold = 0.37
 
 local function getCharacter()
-    return player.Character or player.CharacterAdded:Wait()
+    if player.Character then
+        return player.Character
+    end
+    return player.CharacterAdded:Wait()
 end
+
+local function isCharacterLoaded()
+    local character = player.Character
+    return character and character.Parent and character:FindFirstChild("HumanoidRootPart") and character:FindFirstChildOfClass("Humanoid")
+end
+
+repeat task.wait() until isCharacterLoaded()  -- Ensure character is fully loaded before proceeding
 
 local function getHRP()
     local character = getCharacter()
@@ -56,7 +66,7 @@ local function sendToVoid()
         end
 
         repeat task.wait() until not character or not character.Parent
-        repeat task.wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        repeat task.wait() until isCharacterLoaded()
         task.wait(0.5)
     end
 end
