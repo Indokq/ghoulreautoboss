@@ -19,7 +19,7 @@ local function getHRP()
 end
 
 local function getBoss()
-    for _, model in ipairs(Workspace.Entities:GetChildren()) do
+    for _, model in pairs(Workspace.Entities:GetChildren()) do
         if model:IsA("Model") and model:GetAttribute("FirstName") == "Eto" then
             return model
         end
@@ -34,7 +34,9 @@ end
 
 local function sendToVoid()
     local boss = getBoss()
-    if not boss or not boss:FindFirstChild("HumanoidRootPart") then return end
+    if not boss or not boss:FindFirstChild("HumanoidRootPart") then
+        return
+    end
 
     while not hasForceField() do
         local character = getCharacter()
@@ -45,7 +47,7 @@ local function sendToVoid()
             humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
             humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
 
-            for _ = 1, 10 do
+            for i = 1, 10 do
                 hrp.CFrame = hrp.CFrame * CFrame.new(0, -60, 0)
                 task.wait(0.3)
             end
@@ -60,49 +62,61 @@ local function sendToVoid()
 end
 
 local function autoEquipWeapon()
-    ReplicatedStorage:WaitForChild("Bridgenet2Main"):WaitForChild("dataRemoteEvent"):FireServer({
-        [1] = { { ["Module"] = "Toggle", ["IsHolding"] = true }, "\5" }
-    })
+    local args = {
+        [1] = {
+            [1] = { ["Module"] = "Toggle", ["IsHolding"] = true },
+            [2] = "\5"
+        }
+    }
+    ReplicatedStorage:WaitForChild("Bridgenet2Main"):WaitForChild("dataRemoteEvent"):FireServer(unpack(args))
 end
 
 local function autoM1()
     autoEquipWeapon()
-
+    
     while hasForceField() do
-        ReplicatedStorage:WaitForChild("Bridgenet2Main"):WaitForChild("dataRemoteEvent"):FireServer({
-            [1] = { { ["Module"] = "M1" }, "\5" }
-        })
+        local args = {
+            [1] = {
+                [1] = { ["Module"] = "M1" },
+                [2] = "\5"
+            }
+        }
+
+        ReplicatedStorage:WaitForChild("Bridgenet2Main"):WaitForChild("dataRemoteEvent"):FireServer(unpack(args))
         task.wait(0.2)
     end
 end
 
 local function tweenToBoss()
     while true do
-        if not hasForceField() then
+        if not hasForceField() then 
             task.wait(0.5)
             continue
         end
-
+        
         local boss = getBoss()
-        if not boss or not boss:FindFirstChild("HumanoidRootPart") then
+        if not boss or not boss:FindFirstChild("HumanoidRootPart") then 
             task.wait(1)
             continue
         end
-
+        
         local hrp = getHRP()
         local bossPosition = boss.HumanoidRootPart.Position
         local distance = (hrp.Position - bossPosition).Magnitude
         local tweenTime = math.clamp(distance / 50, 1, 4)
+        
+        local goal = { CFrame = CFrame.new(bossPosition) }
+        local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tween = TweenService:Create(hrp, tweenInfo, goal)
 
-        local tween = TweenService:Create(hrp, TweenInfo.new(tweenTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = CFrame.new(bossPosition) })
         tween:Play()
 
-        repeat
+        while tween.PlaybackState == Enum.PlaybackState.Playing do
+            if not hasForceField() then
+                tween:Cancel()
+                break
+            end
             task.wait(0.1)
-        until not hasForceField() or tween.PlaybackState ~= Enum.PlaybackState.Playing
-
-        if not hasForceField() then
-            tween:Cancel()
         end
 
         task.wait(1)
@@ -116,7 +130,7 @@ local function autoReplay()
         :WaitForChild("Vote")
         :WaitForChild("Frame")
         :WaitForChild("CosmeticInterface")
-        :FindFirstChild("Replay")
+        :WaitForChild("Replay")
 
     if replayButton then
         GuiService.SelectedObject = replayButton
@@ -140,13 +154,6 @@ RunService.Heartbeat:Connect(function()
             killNPC(npc)
         end
     end
-
-    -- Boss Check for Auto Replay
-    local boss = getBoss()
-    if not boss or not boss:FindFirstChild("Humanoid") or boss.Humanoid.Health <= 0 then
-        autoReplay()
-        task.wait(5) -- Prevent spam
-    end
 end)
 
 task.spawn(tweenToBoss)
@@ -156,4 +163,10 @@ while true do
     task.spawn(autoM1)
 
     repeat task.wait() until not hasForceField()
+
+    local boss = getBoss()
+    if not boss or not boss:FindFirstChild("Humanoid") or boss.Humanoid.Health <= 0 then
+        autoReplay()
+        task.wait(5)
+    end
 end
