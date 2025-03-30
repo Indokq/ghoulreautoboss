@@ -153,7 +153,6 @@ task.spawn(tweenToBoss)
 
 while true do
     sendToVoid()
-    autoEquipWeapon()
     task.spawn(autoM1)
 
     repeat task.wait() until not hasForceField()
