@@ -124,7 +124,7 @@ local function tweenToBoss()
 end
 
 local function autoReplay()
-    task.wait(6)
+    task.wait(2)
 
     local replayButton = player:WaitForChild("PlayerGui")
         :WaitForChild("Vote")
