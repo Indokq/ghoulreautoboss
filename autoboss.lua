@@ -151,6 +151,14 @@ local function killNPC(npc)
     end
 end
 
+local function pressSpaceOnLoad()
+    repeat task.wait() until game:IsLoaded() -- Wait for game to load
+    task.wait(10) -- Wait for 10 seconds
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game) -- Press Space
+    task.wait(0.1)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game) -- Release Space
+end
+
 RunService.Heartbeat:Connect(function()
     for _, npc in pairs(Workspace.Entities:GetChildren()) do
         if npc:IsA("Model") then
@@ -160,6 +168,7 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- **Ensure Character and Boss are Loaded Before Running**
+task.spawn(pressSpaceOnLoad) -- Run space pressing function
 repeat task.wait() until isCharacterLoaded()
 repeat task.wait() until getBoss() -- Wait for boss to exist
 
