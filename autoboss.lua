@@ -21,8 +21,6 @@ local function isCharacterLoaded()
     return character and character.Parent and character:FindFirstChild("HumanoidRootPart") and character:FindFirstChildOfClass("Humanoid")
 end
 
-repeat task.wait() until isCharacterLoaded()  -- Ensure character is fully loaded before proceeding
-
 local function getHRP()
     local character = getCharacter()
     return character:WaitForChild("HumanoidRootPart", 5)
@@ -166,15 +164,29 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
+-- **Ensure Character and Boss are Loaded Before Running**
+repeat task.wait() until isCharacterLoaded()
+repeat task.wait() until getBoss() -- Wait for boss to exist
+
 task.spawn(tweenToBoss)
 
 while true do
     sendToVoid()
     task.spawn(autoM1)
 
+    -- **Check if the boss is already dead before waiting for ForceField**
+    local boss = getBoss()
+    if not boss or not boss:FindFirstChild("Humanoid") or boss.Humanoid.Health <= 0 then
+        autoReplay()
+        task.wait(5)
+        continue
+    end
+
+    -- Now wait until ForceField disappears
     repeat task.wait() until not hasForceField()
 
-    local boss = getBoss()
+    -- Re-check boss after ForceField disappears
+    boss = getBoss()
     if not boss or not boss:FindFirstChild("Humanoid") or boss.Humanoid.Health <= 0 then
         autoReplay()
         task.wait(5)
